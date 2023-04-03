@@ -8,6 +8,9 @@ import java.net.InetAddress;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.concurrent.TimeUnit;
+
+//import javax.imageio.stream.MemoryCacheImageInputStream;
+
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
  
@@ -18,15 +21,15 @@ public class MyClient {
     		Socket s = new Socket("localhost", 50000);
     		
     		
-			// Client端循环内容：
+			// Client\u7aef\u5faa\u73af\u5185\u5bb9\uff1a
 			// REDY
-   			// 获取JOBN
+   			// \u83b7\u53d6JOBN
 			// Gets Capable
-   			// 获取 DATA X Y
+   			// \u83b7\u53d6 DATA X Y
 			// OK
-   			// 获取服务器列表
+   			// \u83b7\u53d6\u670d\u52a1\u5668\u5217\u8868
 			// OK
-   			// 获取一个“.”
+   			// \u83b7\u53d6\u4e00\u4e2a\u201c.\u201d
 			// SCHD
 
 
@@ -42,95 +45,64 @@ public class MyClient {
     		String username = System.getProperty("user.name");
     		out.write(("AUTH " + username + "\n").getBytes() );
     		str = in.readLine();
-			print(str);
+		print(str);
 
-			int jobID = 0;
-			int serverCount = 0;
-			int coreCount = 0;
-			String largestType = null;
-			boolean flag = true;
+		int jobID = 0;
+		int core = 0;
+		int memory = 0;
+		int disk = 0;
+		String serverName = "";
+		int serverNum = 0;
+		int counter = 0;
 
+		//loop X times, each time a line of records
+		while(true){
+		
 			out.write( ("REDY\n").getBytes() );
 			str = in.readLine();
 			print(str);
-
-			
-			out.write( ("OK\n").getBytes() );
-			str = in.readLine();
-			print(str);
-			
-			
-			//loop X times, each time a line of records
-			while(true){
-				if (str.equals("NONE")) break; // for NONE
-				else if (str.equals("JCPL")) continue; // for JCPL
-				else { // for JOBN
-					String[] jobInfo = str.split(" "); 
-
-					jobID = Integer.parseInt(jobInfo[2]);
-
-					out.write( ("GETS Capable\n").getBytes() );
-					str = in.readLine(); // DATA X Y
-					String[] serverInfoList = str.split(" "); 
-
-					out.write( ("OK\n").getBytes() );
-
-					for (int i = 0; i < Integer.parseInt(serverInfoList[1]); i++){
-						if (flag) {
-							str = in.readLine(); // server information each line
-							print(str);
-
-							if(Integer.parseInt(serverInfoList[2]) > coreCount) {
-
-							}
-						}
-					}
-					flag = false;
-				}
-			}
-
-    		
-    		//send: OK
-			out.write( ("OK\n").getBytes() );
-			str = in.readLine();
-			print(str);
-
-
-			while(true){
-				if (str.equals("NONE")) break; // for NONE
-				else if (str.equals(".")) continue;
-				else { // for SCHD
-					String[] jobInfo = str.split(" "); 
-
-					jobID = Integer.parseInt(jobInfo[2]);
-
-					out.write( ("SCHD\n").getBytes() );
-					str = in.readLine(); // DATA X Y
-					String[] serverInfoList = str.split(" "); 
-
-					out.write( ("OK\n").getBytes() );
-
-					for (int i = 0; i < Integer.parseInt(serverInfoList[1]); i++){
-						if (flag) {
-							str = in.readLine(); // server information each line
-							print(str);
-
-							if(Integer.parseInt(serverInfoList[2]) > coreCount) {
-							
-							}
-						}
-					}
-					flag = false;
-				}
-			}
-    		
-    		//rec: .  (received thing here is a dot)
 		
-		    //find a way to locate the largest server type ans serverID
-		
-		    //do the SCHD
+			if (str.equals("NONE")) break; // for NONE
+			else if (str.startsWith("JCPL")) continue; // for JCPL
+			else { // for JOBN
+				String[] jobInfo = str.split(" "); 
 
-    		
+				jobID = Integer.parseInt(jobInfo[2]);
+				core = Integer.parseInt(jobInfo[4]);
+				memory = Integer.parseInt(jobInfo[5]);
+				disk = Integer.parseInt(jobInfo[6]);
+
+				out.write( ("GETS Capable "+ core + " " + memory + " " + disk + "\n").getBytes() );//find a way to locate the largest server type ans serverID
+				str = in.readLine(); // DATA X Y
+				String[] serverInfoList = str.split(" "); 
+				
+				out.write( ("OK\n").getBytes() );
+				
+
+				for (int i = 0; i < Integer.parseInt(serverInfoList[1]); i++){
+					
+					str = in.readLine(); // server information each line
+					print(str);
+					
+					String[] listN = str.split(" ");
+					serverName = listN[0];
+					
+					serverNum = Integer.parseInt(listN[1]);
+				
+				}
+
+				out.write( ("OK\n").getBytes() );
+				str = in.readLine();
+
+				out.write( ("SCHD " + jobID + " " + serverName + " " + (counter% (serverNum+1) ) + "\n").getBytes() );//do the SCHD
+				str = in.readLine();
+				
+				counter++;
+				
+			}
+			
+		}
+
     		out.write( ("QUIT\n").getBytes() );
     		str = in.readLine();
     		print(str);
