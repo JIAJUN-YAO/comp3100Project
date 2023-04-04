@@ -119,4 +119,3 @@ public class MyClient {
 		System.out.println(str);
 	}
 }
-         
